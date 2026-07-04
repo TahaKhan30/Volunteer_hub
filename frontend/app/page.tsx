@@ -1,5 +1,3 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -42,10 +40,6 @@ const STEPS = [
 ];
 
 export default function HomePage() {
-  const cookieStore = cookies();
-  const hasToken = cookieStore.has("access_token");
-  if (hasToken) redirect("/dashboard");
-
   return (
     <main style={{ background: "var(--color-background-primary)" }}>
       {/* Nav */}

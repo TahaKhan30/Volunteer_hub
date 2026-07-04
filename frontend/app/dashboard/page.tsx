@@ -1,21 +1,16 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getDashboardStats } from "@/lib/api";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
-async function fetchStats() {
-  const cookieStore = cookies();
-  const token = cookieStore.get("access_token");
-  if (!token) redirect("/login");
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/applications/stats`, {
-    headers: { Cookie: `access_token=${token.value}` },
-    cache: "no-store",
-  });
-  if (res.status === 401) redirect("/login");
-  return res.json();
-}
+export default function DashboardPage() {
+  const [stats, setStats] = useState<any>(null);
 
-export default async function DashboardPage() {
-  const stats = await fetchStats();
+  useEffect(() => {
+    getDashboardStats().then(setStats);
+  }, []);
+
+  if (!stats) return <p style={{ fontSize: 14, color: "var(--color-text-tertiary)" }}>Loading…</p>;
 
   const cards = [
     { label: "Total applications", value: stats.total_applications, color: "var(--color-background-info)", text: "var(--color-text-info)" },

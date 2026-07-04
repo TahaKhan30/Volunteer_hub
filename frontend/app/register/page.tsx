@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { register } from "@/lib/api";
+import { register, getMe } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -14,6 +14,12 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getMe().then(user => {
+      if (user) router.replace("/dashboard");
+    });
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
