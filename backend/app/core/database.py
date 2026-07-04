@@ -17,6 +17,8 @@ async def get_db() -> AsyncSession:
 
 async def create_tables():
     async with engine.begin() as conn:
-        from app.models.user import User          # noqa: F401
-        from app.models.refresh_token import RefreshToken  # noqa: F401
+        from app.models.user import User                    # noqa: F401
+        from app.models.refresh_token import RefreshToken   # noqa: F401
+        from app.models.application import Application      # noqa: F401
+        from app.models.volunteer import Volunteer          # noqa: F401
         await conn.run_sync(Base.metadata.create_all)

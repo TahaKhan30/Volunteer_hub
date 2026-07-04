@@ -9,9 +9,12 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     FRONTEND_URL: str = "http://localhost:3000"
 
-    # Cookie names — centralised so frontend + backend always agree
     ACCESS_TOKEN_COOKIE: str = "access_token"
     REFRESH_TOKEN_COOKIE: str = "refresh_token"
+
+    UPLOAD_DIR: str = "uploads"
+    MAX_PHOTO_MB: int = 2
+    MAX_RESUME_MB: int = 5
 
     class Config:
         env_file = ".env"

@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { register } from "@/lib/api";
+import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function RegisterPage() {
     try {
       await register(email, password, fullName || undefined);
       // FastAPI registers the user AND sets cookies in one call
+      toast.success("Account created successfully");
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Registration failed");
@@ -32,6 +35,7 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
+        <Image src="/logo.png" alt="Volunteers Hub" width={72} height={65} priority className="mx-auto mb-4" />
         <h1 className="text-2xl font-semibold text-gray-900 mb-1 text-center">Create account</h1>
         <p className="text-sm text-gray-400 text-center mb-8">
           Already have one?{" "}

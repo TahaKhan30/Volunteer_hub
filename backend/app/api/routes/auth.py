@@ -17,8 +17,7 @@ from app.services.jwt_service import create_access_token, create_refresh_token, 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-def _hash_token(token: str) -> str:
-    """Store only the hash of the refresh token in DB — never the raw value."""
+def _hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
@@ -27,22 +26,14 @@ async def register(body: RegisterRequest, response: Response, db: AsyncSession =
     existing = await db.execute(select(User).where(User.email == body.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
-
-    user = User(
-        email=body.email,
-        hashed_password=hash_password(body.password),
-        full_name=body.full_name,
-    )
+    user = User(email=body.email, hashed_password=hash_password(body.password), full_name=body.full_name)
     db.add(user)
     await db.commit()
     await db.refresh(user)
-
-    # Log the user in immediately after registration
     access_token = create_access_token(user.id, user.email)
     refresh_token = create_refresh_token(user.id)
-    await _save_refresh_token(db, user.id, refresh_token)
+    await _save_refresh(db, user.id, refresh_token)
     set_auth_cookies(response, access_token, refresh_token)
-
     return user
 
 
@@ -50,17 +41,12 @@ async def register(body: RegisterRequest, response: Response, db: AsyncSession =
 async def login(body: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == body.email, User.is_active == True))  # noqa: E712
     user = result.scalar_one_or_none()
-
     if not user or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-
     access_token = create_access_token(user.id, user.email)
     refresh_token = create_refresh_token(user.id)
-    await _save_refresh_token(db, user.id, refresh_token)
-
-    # FastAPI sets the cookies — frontend never handles tokens directly
+    await _save_refresh(db, user.id, refresh_token)
     set_auth_cookies(response, access_token, refresh_token)
-
     return user
 
 
@@ -72,15 +58,13 @@ async def refresh(
 ):
     if not refresh_token:
         raise HTTPException(status_code=401, detail="No refresh token")
-
     try:
         payload = decode_refresh_token(refresh_token)
         user_id = int(payload["sub"])
     except (JWTError, KeyError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-    # Check token exists in DB and is not revoked
-    token_hash = _hash_token(refresh_token)
+    token_hash = _hash(refresh_token)
     result = await db.execute(
         select(RefreshToken).where(
             RefreshToken.token_hash == token_hash,
@@ -93,11 +77,9 @@ async def refresh(
     if not stored:
         raise HTTPException(status_code=401, detail="Refresh token revoked or expired")
 
-    # Revoke old refresh token (rotation — each token can only be used once)
     stored.revoked = True
     await db.commit()
 
-    # Fetch user and issue new token pair
     user_result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))  # noqa: E712
     user = user_result.scalar_one_or_none()
     if not user:
@@ -105,9 +87,8 @@ async def refresh(
 
     new_access = create_access_token(user.id, user.email)
     new_refresh = create_refresh_token(user.id)
-    await _save_refresh_token(db, user.id, new_refresh)
+    await _save_refresh(db, user.id, new_refresh)
     set_auth_cookies(response, new_access, new_refresh)
-
     return {"message": "Tokens refreshed"}
 
 
@@ -117,35 +98,23 @@ async def logout(
     refresh_token: str | None = Cookie(default=None, alias=settings.REFRESH_TOKEN_COOKIE),
     db: AsyncSession = Depends(get_db),
 ):
-    # Revoke the refresh token in DB if present
     if refresh_token:
-        token_hash = _hash_token(refresh_token)
-        result = await db.execute(
-            select(RefreshToken).where(RefreshToken.token_hash == token_hash)
-        )
+        token_hash = _hash(refresh_token)
+        result = await db.execute(select(RefreshToken).where(RefreshToken.token_hash == token_hash))
         stored = result.scalar_one_or_none()
         if stored:
             stored.revoked = True
             await db.commit()
-
-    # Always clear cookies — even if token not found
     clear_auth_cookies(response)
     return {"message": "Logged out"}
 
 
 @router.get("/me", response_model=UserResponse)
 async def me(user: User = Depends(get_current_user)):
-    """Returns the currently authenticated user. Use Depends(get_current_user) on any protected route."""
     return user
 
 
-# ── internal helper ──────────────────────────────────────────────────────────
-
-async def _save_refresh_token(db: AsyncSession, user_id: int, raw_token: str) -> None:
+async def _save_refresh(db: AsyncSession, user_id: int, raw_token: str) -> None:
     expires = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    db.add(RefreshToken(
-        token_hash=_hash_token(raw_token),
-        user_id=user_id,
-        expires_at=expires,
-    ))
+    db.add(RefreshToken(token_hash=_hash(raw_token), user_id=user_id, expires_at=expires))
     await db.commit()

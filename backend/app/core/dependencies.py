@@ -12,18 +12,8 @@ async def get_current_user(
     access_token: str | None = Cookie(default=None, alias=settings.ACCESS_TOKEN_COOKIE),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    """
-    FastAPI dependency — use on any protected endpoint:
-
-        @router.get("/me")
-        async def me(user: User = Depends(get_current_user)):
-            ...
-
-    Reads the HttpOnly cookie automatically — no Authorization header needed.
-    """
     if not access_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-
     try:
         payload = decode_access_token(access_token)
         user_id = int(payload["sub"])
@@ -32,8 +22,6 @@ async def get_current_user(
 
     result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))  # noqa: E712
     user = result.scalar_one_or_none()
-
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
-
     return user
