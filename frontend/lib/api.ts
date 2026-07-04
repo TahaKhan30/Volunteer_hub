@@ -117,5 +117,7 @@ export async function updateVolunteer(id: number, data: Record<string, unknown>)
 
 export function fileUrl(path: string | null) {
   if (!path) return null;
+  // Cloudinary returns full https:// URLs; older local-disk paths start with "uploads/"
+  if (path.startsWith("http")) return path;
   return `${API}/uploads/${path.replace(/^uploads\//, "")}`;
 }

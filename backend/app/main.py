@@ -1,17 +1,11 @@
-import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.database import create_tables
 from app.api.routes.auth import router as auth_router
 from app.api.routes.applications import router as applications_router
 from app.api.routes.volunteers import router as volunteers_router
-
-
-for sub in ("photos", "resumes"):
-    os.makedirs(os.path.join(settings.UPLOAD_DIR, sub), exist_ok=True)
 
 
 @asynccontextmanager
@@ -38,9 +32,6 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(applications_router)
 app.include_router(volunteers_router)
-
-# Serve uploaded files
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 
 @app.get("/health")

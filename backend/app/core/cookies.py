@@ -7,8 +7,8 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         key=settings.ACCESS_TOKEN_COOKIE,
         value=access_token,
         httponly=True,
-        secure=False,   # set True in production
-        samesite="lax",
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/",
     )
@@ -16,13 +16,23 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         key=settings.REFRESH_TOKEN_COOKIE,
         value=refresh_token,
         httponly=True,
-        secure=False,   # set True in production
-        samesite="lax",
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         path="/api/auth",
     )
 
 
 def clear_auth_cookies(response: Response) -> None:
-    response.delete_cookie(key=settings.ACCESS_TOKEN_COOKIE, path="/")
-    response.delete_cookie(key=settings.REFRESH_TOKEN_COOKIE, path="/api/auth")
+    response.delete_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE,
+        path="/",
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
+    )
+    response.delete_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE,
+        path="/api/auth",
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
+    )
