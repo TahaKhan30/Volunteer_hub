@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getApplications, fileUrl } from "@/lib/api";
 import Link from "next/link";
@@ -13,6 +13,14 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function ApplicationsPage() {
+  return (
+    <Suspense fallback={<p style={{ fontSize: 14, color: "var(--color-text-tertiary)" }}>Loading…</p>}>
+      <ApplicationsPageInner />
+    </Suspense>
+  );
+}
+
+function ApplicationsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [apps, setApps] = useState<any[]>([]);

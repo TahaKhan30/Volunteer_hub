@@ -126,8 +126,15 @@ export default function HomePage() {
 
       {/* Footer */}
       <div style={{ borderTop: "0.5px solid var(--color-border-tertiary)", padding: "24px", textAlign: "center" }}>
-        <p style={{ fontSize: 13, color: "var(--color-text-tertiary)", margin: 0 }}>
+        <p style={{ fontSize: 13, color: "var(--color-text-tertiary)", margin: "0 0 6px" }}>
           Connect · Serve · Impact — © {new Date().getFullYear()} Volunteers Hub
+        </p>
+        <p style={{ fontSize: 12, color: "var(--color-text-tertiary)", margin: 0 }}>
+          Created by Taha Khan as a portfolio project —{" "}
+          <a href="https://www.linkedin.com/in/taha-khan-30/" target="_blank" rel="noreferrer"
+            style={{ color: "var(--color-text-secondary)", textDecoration: "underline" }}>
+            LinkedIn
+          </a>
         </p>
       </div>
     </main>
