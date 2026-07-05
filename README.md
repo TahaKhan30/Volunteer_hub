@@ -1,4 +1,4 @@
-# Volunteer Hub
+# Volunteer Hub  - https://volunteer-hub-liard.vercel.app/
 
 A volunteer management system — a public application form paired with an admin dashboard for reviewing applicants, accepting them as volunteers, and managing their status over time. Built with **FastAPI + Next.js + PostgreSQL**, using HttpOnly-cookie JWT auth for the admin side.
 
