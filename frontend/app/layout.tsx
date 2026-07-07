@@ -7,8 +7,8 @@ import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "JWT Auth Starter",
-  description: "FastAPI + Next.js JWT auth with HttpOnly cookies",
+  title: "Volunteers Hub",
+  description: "Apply to volunteer and manage volunteer applications.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
