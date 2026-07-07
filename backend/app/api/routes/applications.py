@@ -1,5 +1,6 @@
 import calendar
 import json
+import phonenumbers
 from datetime import date, datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from fastapi.responses import StreamingResponse
@@ -20,6 +21,41 @@ router = APIRouter(prefix="/api/applications", tags=["applications"])
 
 _DURATION_WEEKS = {"1 week": 1, "2 weeks": 2, "3 weeks": 3, "4 weeks": 4}
 _DURATION_MONTHS = {"1 month": 1, "2 months": 2, "3 months": 3, "6 months": 6}
+
+# Real consumer email providers only — blocks throwaway/fake domains.
+# Must match frontend ALLOWED_EMAIL_DOMAINS in lib/form-types.ts exactly.
+ALLOWED_EMAIL_DOMAINS = {
+    "gmail.com", "googlemail.com",
+    "outlook.com", "hotmail.com", "live.com", "msn.com",
+    "yahoo.com", "yahoo.co.uk", "yahoo.co.in",
+    "icloud.com", "me.com", "mac.com",
+    "aol.com",
+    "protonmail.com", "proton.me",
+    "zoho.com",
+    "gmx.com", "gmx.net",
+    "mail.com",
+    "yandex.com", "yandex.ru",
+    "hey.com",
+    "rediffmail.com",
+}
+
+
+def validate_email_domain(email: str) -> None:
+    domain = email.rsplit("@", 1)[-1].lower() if "@" in email else ""
+    if domain not in ALLOWED_EMAIL_DOMAINS:
+        raise HTTPException(
+            status_code=400,
+            detail="Please use a real email provider (Gmail, Outlook, Yahoo, etc.)",
+        )
+
+
+def validate_phone(phone: str) -> None:
+    try:
+        parsed = phonenumbers.parse(phone, None)
+    except phonenumbers.NumberParseException:
+        raise HTTPException(status_code=400, detail="Enter a valid phone number")
+    if not phonenumbers.is_valid_number(parsed):
+        raise HTTPException(status_code=400, detail="Enter a valid phone number")
 
 
 def compute_end_date(start: date, duration: str) -> date:
@@ -50,6 +86,9 @@ async def submit_application(
     resume: UploadFile | None = File(None),
     db: AsyncSession = Depends(get_db),
 ):
+    validate_email_domain(email)
+    validate_phone(phone)
+
     photo_path = None
     resume_path = None
 

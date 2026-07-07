@@ -7,7 +7,7 @@ import ReactCountryFlag from "react-country-flag";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { submitApplication } from "@/lib/api";
-import { FormState, INITIAL_FORM_STATE, SKILL_OPTIONS, DURATION_OPTIONS, COUNTRY_OPTIONS, STEPS } from "@/lib/form-types";
+import { FormState, INITIAL_FORM_STATE, SKILL_OPTIONS, DURATION_OPTIONS, COUNTRY_OPTIONS, STEPS, ALLOWED_EMAIL_DOMAINS } from "@/lib/form-types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
@@ -17,6 +17,8 @@ export default function ApplyPage() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
   const resumeRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -51,12 +53,27 @@ export default function ApplyPage() {
     }
   }
 
+  function emailError(value: string): string | null {
+    if (!value) return null;
+    const match = /^[^\s@]+@([^\s@]+\.[^\s@]+)$/.exec(value.trim());
+    if (!match) return "Enter a valid email address";
+    if (!ALLOWED_EMAIL_DOMAINS.includes(match[1].toLowerCase())) {
+      return "Please use a real email provider (Gmail, Outlook, Yahoo, etc.)";
+    }
+    return null;
+  }
+
+  function phoneError(value: string): string | null {
+    if (!value) return null;
+    return isValidPhoneNumber(value) ? null : "Enter a valid phone number";
+  }
+
   function isValidEmail(value: string) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    return value.trim() !== "" && emailError(value) === null;
   }
 
   function isValidPhone(value: string) {
-    return !!value && isValidPhoneNumber(value);
+    return !!value && phoneError(value) === null;
   }
 
   function isStepValid(s: number) {
@@ -167,7 +184,14 @@ export default function ApplyPage() {
               <Field label="First name" required><input type="text" inputMode="text" autoComplete="given-name" placeholder="Taha" value={form.firstName} onChange={e => update("firstName", e.target.value)} /></Field>
               <Field label="Last name" required><input type="text" inputMode="text" autoComplete="family-name" placeholder="Khan" value={form.lastName} onChange={e => update("lastName", e.target.value)} /></Field>
             </div>
-            <Field label="Email" required><input type="email" inputMode="email" autoComplete="email" placeholder="taha@example.com" value={form.email} onChange={e => update("email", e.target.value)} /></Field>
+            <Field label="Email" required>
+              <input type="email" inputMode="email" autoComplete="email" placeholder="taha@example.com" value={form.email}
+                onChange={e => update("email", e.target.value)}
+                onBlur={() => setEmailTouched(true)} />
+              {emailTouched && emailError(form.email) && (
+                <p style={{ fontSize: 12, color: "var(--color-text-danger)", margin: "6px 0 0" }}>{emailError(form.email)}</p>
+              )}
+            </Field>
             <Field label="Phone" required>
               <PhoneInput
                 international
@@ -175,7 +199,11 @@ export default function ApplyPage() {
                 placeholder="+90 555 000 00 00"
                 value={form.phone}
                 onChange={v => update("phone", v || "")}
+                onBlur={() => setPhoneTouched(true)}
               />
+              {phoneTouched && phoneError(form.phone) && (
+                <p style={{ fontSize: 12, color: "var(--color-text-danger)", margin: "6px 0 0" }}>{phoneError(form.phone)}</p>
+              )}
             </Field>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <Field label="Country" required>

@@ -76,6 +76,23 @@ export const COUNTRY_OPTIONS = [
   { name: "Other", code: null as string | null },
 ];
 
+// Real consumer email providers only — blocks throwaway/fake domains on the apply form.
+// Must match backend ALLOWED_EMAIL_DOMAINS in app/api/routes/applications.py exactly.
+export const ALLOWED_EMAIL_DOMAINS = [
+  "gmail.com", "googlemail.com",
+  "outlook.com", "hotmail.com", "live.com", "msn.com",
+  "yahoo.com", "yahoo.co.uk", "yahoo.co.in",
+  "icloud.com", "me.com", "mac.com",
+  "aol.com",
+  "protonmail.com", "proton.me",
+  "zoho.com",
+  "gmx.com", "gmx.net",
+  "mail.com",
+  "yandex.com", "yandex.ru",
+  "hey.com",
+  "rediffmail.com",
+];
+
 export const STEPS = [
   "Basic info",
   "Availability",
